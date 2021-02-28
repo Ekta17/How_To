@@ -19,14 +19,23 @@ Code formatter used - Google Sytle Formatter (https://github.com/google/google-j
         
         if [[ ! -f $GOOGLE_STYLE_FORMATTER ]]
         then
-        echo 'Google Style formatting jar file missing'
+           echo 'Google Style formatting jar file missing'
         fi
-        
+
         changed_java_files=$(git diff --cached --name-only --diff-filter=ACMR | grep ".*java$" || true)
+        echo "New or changed files: $changed_java_files"
+        
         if [[ -n "$changed_java_files" ]]
         then
-        echo "Reformatting Java files: $changed_java_files"
-        java -jar "$GOOGLE_STYLE_FORMATTER" --replace $changed_java_files
+        reformatted_files=$(java -jar $GOOGLE_STYLE_FORMATTER --dry-run $changed_java_files | tr '\r\n' ' ')
+        
+            if [[ -n "$reformatted_files" ]]
+            then
+                echo "Formatted files: $reformatted_files"
+                java -jar $GOOGLE_STYLE_FORMATTER --replace $reformatted_files
+                echo "Re-adding formatted files: $reformatted_files"
+                git stage $reformatted_files
+            fi
         else
         echo "No Java files changes found."
         fi
